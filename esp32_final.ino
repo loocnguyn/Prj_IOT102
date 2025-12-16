@@ -123,6 +123,7 @@ void readArduino() {
       msg == "ADMIN:ADD_CARD"      ||
       msg == "ADMIN:REMOVE_CARD"   ||
       msg == "ADMIN:RESET_ALL"     ||
+      //GAS 6.Nhận cảnh báo GAS từ UNO
       msg == "ALARM:GAS"
     ) {
       terminal.println(msg);
@@ -165,7 +166,9 @@ void sendData() {
   if (isnan(t) || isnan(h)) return;
 
   bool rain = digitalRead(RAIN_PIN) == LOW;
+  //GAS 1.Đọc cảm biến Gas
   int gasValue = analogRead(MQ2_PIN);
+  //GAS 2. So sánh với ngưỡng
   bool gasAlarm = gasValue > GAS_THRESHOLD;
 
   handleAutoLight();
@@ -183,6 +186,7 @@ void sendData() {
     lcd.printf("Humi:%d%%    ", (int)h);
   } else {
     lcd.setCursor(0,0);
+    //GAS 3.Hiển thị Gas lên LCD
     lcd.printf("Gas:%d %s ", gasValue, gasAlarm ? "AL" : "OK");
     lcd.setCursor(0,1);
     lcd.printf("Weather:%s ", rain ? "RAIN" : "DRY");
@@ -192,17 +196,19 @@ void sendData() {
     Blynk.virtualWrite(V1, t);
     Blynk.virtualWrite(V2, h);
     Blynk.virtualWrite(V3, rain ? "Rain" : "Dry");
+    //GAS 3.Gửi dữ liệu gas lên Blynk
     Blynk.virtualWrite(V5, gasValue);
   }
-
+  //GAS 4.Gửi cảnh báo gas sang Arduino UNO
   static bool gasSent = false;
   if (gasAlarm && !gasSent) {
     ArduinoSerial.println("GAS_ALARM_3S");
     gasSent = true;
   }
+  //GAS 5. Khi Gas trở lại bình thường thì chỉnh về bình thưởng để có thể báo lại lần sau nếu GAS tăng tiếp
   if (!gasAlarm) gasSent = false;
 
-  // 🔥 GỬI TRẠNG THÁI LED
+  //  GỬI TRẠNG THÁI LED
   sendLedStatusToTerminal();
 }
 
@@ -281,3 +287,4 @@ void loop() {
     lcd.clear();
   }
 }
+
